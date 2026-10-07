@@ -13,20 +13,32 @@ export default function PlaceNpcSelector({
 }: PlaceNpcSelectorProps) {
     return <>
         <div>
-            <div>장소</div>
-
-            <button onClick={() => setPlace("school")}>
-                학교
-            </button>
-
-            <button onClick={() => setPlace("cafe")}>
-                카페
-            </button>
-        </div>
+            <h2>장소</h2>
+            <div className="grid grid-cols-2 bg-gray-200">
+                <button
+                    className={`w-full py-3 rounded ${place === "school"
+                            ? "bg-background text-primary-light font-bold"
+                            : "text-slate-500 hover:bg-white"
+                        }`}
+                    onClick={() => setPlace("school")}
+                >
+                    학교
+                </button>
+                <button
+                    className={`w-full rounded py-3 ${place === "cafe"
+                            ? "bg-background text-primary-light font-bold "
+                            : "text-slate-500 hover:bg-white"
+                        }`}
+                    onClick={() => setPlace("cafe")}
+                >
+                    카페
+                </button>
+            </div>
+        </div >
 
         <div>
-            <div>대화 상대</div>
-
+            <h2>대화 상대</h2>
+            
             {place === "school" && (
                 <>
                     <button onClick={() => setNpc("teacher")}>

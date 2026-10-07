@@ -17,9 +17,9 @@ export default function Chat() {
   // 유저 메세지 전송
   const sendMessage = (body: ChatMessageInfo) => {
     fetch(`/api/chat/user_talk`, {
-      method: "POST", 
+      method: "POST",
       headers: {
-        "Content-Type" : "application/json", 
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
     })
@@ -30,7 +30,7 @@ export default function Chat() {
 
   return (
     <div className="flex">
-      <div>
+      <div className="flex-4">
         <h2 className="text-lg font-semibold">
           AI CHAT
         </h2>
@@ -69,19 +69,23 @@ export default function Chat() {
         </div>
         <div className="h-24 bg-background">
           INPUT
-          <div>
+          <div className="border-lg flex shadow-lg">
             <input
+              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3 rounded-lg "
+              placeholder="대화를 입력해주세요"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
-            <button onClick={() =>
-              sendMessage({
-                message: message,
-                level: level,
-                npc: npc
-              })
-            }
-            >전송</button>
+            <button
+              className="bg-primary-light text-white rounded-r w-20 hover:bg-primary"
+              onClick={() =>
+                sendMessage({
+                  message: message,
+                  level: level,
+                  npc: npc
+                })
+              }
+            >입력</button>
           </div>
         </div>
       </div>
