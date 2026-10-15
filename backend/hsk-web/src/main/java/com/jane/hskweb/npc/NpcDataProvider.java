@@ -26,6 +26,14 @@ public class NpcDataProvider {
                     "학교 선생님",
                     List.of("친절하다"),
                     List.of("학교", "공부")
+            ),
+            "clerk",
+            new NpcData(
+                    "clerk",
+                    "",
+                    "카페 점원",
+                    List.of("예의바르게 말한다"),
+                    List.of("주문", "커피숍")
             )
     );
 

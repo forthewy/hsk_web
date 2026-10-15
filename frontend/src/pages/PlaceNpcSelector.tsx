@@ -17,19 +17,25 @@ export default function PlaceNpcSelector({
             <div className="grid grid-cols-2 bg-gray-200">
                 <button
                     className={`w-full py-3 rounded ${place === "school"
-                            ? "bg-background text-primary-light font-bold"
-                            : "text-slate-500 hover:bg-white"
+                        ? "bg-background text-primary-light font-bold"
+                        : "text-slate-500 hover:bg-white"
                         }`}
-                    onClick={() => setPlace("school")}
+                    onClick={() => {
+                        setPlace("school");
+                        setNpc("teacher");
+                    }}
                 >
                     학교
                 </button>
                 <button
                     className={`w-full rounded py-3 ${place === "cafe"
-                            ? "bg-background text-primary-light font-bold "
-                            : "text-slate-500 hover:bg-white"
+                        ? "bg-background text-primary-light font-bold "
+                        : "text-slate-500 hover:bg-white"
                         }`}
-                    onClick={() => setPlace("cafe")}
+                    onClick={() => {
+                        setPlace("cafe");
+                        setNpc("clerk");
+                    }}
                 >
                     카페
                 </button>
@@ -38,24 +44,44 @@ export default function PlaceNpcSelector({
 
         <div>
             <h2>대화 상대</h2>
-            
+
             {place === "school" && (
-                <>
-                    <button onClick={() => setNpc("teacher")}>
+                <div className="grid grid-cols-2 bg-gray-200">
+                    <button
+                        className={`w-full py-3 rounded ${npc === "teacher"
+                            ? "bg-background text-primary-light font-bold"
+                            : "text-slate-500 hover:bg-white"
+                            }`}
+                        onClick={() => setNpc("teacher")}
+                    >
                         선생님
                     </button>
 
-                    <button onClick={() => setNpc("student")}>
+                    <button
+                        className={`w-full py-3 rounded ${npc === "student"
+                            ? "bg-background text-primary-light font-bold"
+                            : "text-slate-500 hover:bg-white"
+                            }`}
+                        onClick={() => setNpc("student")}
+                    >
                         학생
                     </button>
-                </>
+                </div>
             )}
 
             {place === "cafe" && (
-                <button onClick={() => setNpc("clerk")}>
-                    점원
-                </button>
+                <div className="grid grid-cols-1 bg-gray-200">
+                    <button
+                        className={`w-full py-3 rounded ${npc === "clerk"
+                            ? "bg-background text-primary-light font-bold"
+                            : "text-slate-500 hover:bg-white"
+                            }`}
+                        onClick={() => setNpc("clerk")}
+                    >
+                        점원
+                    </button>
+                </div>
             )}
-        </div>
+        </div >
     </>
 }

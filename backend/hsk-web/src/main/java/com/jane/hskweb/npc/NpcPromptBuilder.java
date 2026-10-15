@@ -53,25 +53,25 @@ public class NpcPromptBuilder {
     }
 
     public String buildNpcPrompt(
-            String npcName,
+            NpcData npc,
             String playerMessage
     ) {
         return """
-                ===== ROLE =====
-                %s
+            ===== ROLE =====
+            %s
 
-                ===== MUST =====
-                %s
+            ===== MUST =====
+            %s
 
-                ===== OUTPUT =====
-                %s
+            ===== OUTPUT =====
+            %s
 
-                ===== PLAYER =====
-                %s
+            ===== PLAYER =====
+            %s
 
-                ===== NPC =====
-                """.formatted(
-                buildRolePrompt(npcName),
+            ===== NPC =====
+            """.formatted(
+                buildRolePrompt(npc),
                 buildMustPrompt(),
                 buildOutputPrompt(),
                 playerMessage
