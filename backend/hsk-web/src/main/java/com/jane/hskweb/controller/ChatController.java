@@ -1,6 +1,7 @@
 package com.jane.hskweb.controller;
 
-import com.jane.hskweb.ChatMessageInfo;
+import com.jane.hskweb.model.ChatMessageInfo;
+import com.jane.hskweb.model.NpcChatResponse;
 import com.jane.hskweb.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +17,8 @@ public class ChatController {
     private final ChatService chatService;
 
     @PostMapping("/user_talk")
-    public String chat(@RequestBody ChatMessageInfo chatMessageInfo) {
+    public NpcChatResponse chat(@RequestBody ChatMessageInfo chatMessageInfo) {
 
-         String response = chatService.Chat(chatMessageInfo);
-
-        return response;
+        return chatService.Chat(chatMessageInfo);
     }
 }

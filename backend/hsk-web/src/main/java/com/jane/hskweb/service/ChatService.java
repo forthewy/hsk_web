@@ -1,8 +1,9 @@
 package com.jane.hskweb.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jane.hskweb.ChatMessageInfo;
+import com.jane.hskweb.model.SessionMemory;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import com.jane.hskweb.model.ChatMessageInfo;
 import com.jane.hskweb.model.NpcChatResponse;
 import com.jane.hskweb.model.NpcData;
 import com.jane.hskweb.npc.NpcDataProvider;
@@ -18,8 +19,18 @@ public class ChatService {
     private final NpcDataProvider npcDataProvider;
     private final NpcPromptBuilder npcPromptBuilder;
     private final ObjectMapper objectMapper;
+    private final SessionMemoryExtractor sessionMemoryExtractor;
 
     public NpcChatResponse Chat(ChatMessageInfo chatMessageInfo) {
+        System.out.println("SessionMemory: "
+                + chatMessageInfo.getSessionMemory().getFacts());
+
+        SessionMemory updatedMemory = sessionMemoryExtractor.extract(
+                chatMessageInfo.getMessage(),
+                chatMessageInfo.getSessionMemory()
+        );
+
+        System.out.println("추출된 기억: " + updatedMemory.getFacts());
 
         // NPC 정보 조회
         NpcData npc = npcDataProvider.getNpc(
@@ -37,7 +48,7 @@ public class ChatService {
         // JSON 문자열 → Java 객체
         try {
             return objectMapper.readValue(response, NpcChatResponse.class);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Gemini 응답 JSON 변환 실패", e);
         }
     }
