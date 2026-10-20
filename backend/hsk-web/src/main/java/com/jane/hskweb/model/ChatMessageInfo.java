@@ -12,4 +12,5 @@ public class ChatMessageInfo {
     private int level;
     private String npc;
     private SessionMemory sessionMemory;
+    private PlayerMemory playerMemory;
 }

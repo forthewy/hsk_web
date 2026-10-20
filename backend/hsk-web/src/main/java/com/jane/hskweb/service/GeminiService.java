@@ -23,7 +23,7 @@ public class GeminiService {
 
             CreateModelInteraction params =
                     CreateModelInteraction.builder()
-                            .model(Model.GEMINI37_FLASH)
+                            .model(Model.GEMINI36_FLASH)
                             .input(InteractionsInput.of(prompt))
                             .build();
 
@@ -63,5 +63,6 @@ public class GeminiService {
             e.printStackTrace();
             throw e;
         }
-  }
+    }
+
 }

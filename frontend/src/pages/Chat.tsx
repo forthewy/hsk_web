@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PlaceNpcSelector from "./PlaceNpcSelector";
+import type { ChatHistory, ChatMessageInfo, NpcChatResponse, PlayerMemory, SessionMemory } from "../types/chat";
 
 export default function Chat() {
   // 입력중 메세지
@@ -12,35 +13,21 @@ export default function Chat() {
     facts: {},
     lastNpcQuestion: null,
   });
-  const [level, setLevel] = useState(1);
+  // 장기기억 (공용)
+  const [playerMemory, setPlayerMemory] = useState<PlayerMemory>({
+    facts: {}
+  });
+  // 장소 선택
   const [place, setPlace] = useState("school");
+  // npc 선택
   const [npc, setNpc] = useState("teacher");
+  const [level, setLevel] = useState(1);
+  // NPC 응답 대기 상태
+  const [isLoading, setIsLoading] = useState(false);
+  const isLoadingRef = useRef(false);
 
-  // 보내는 메세지 정보
-  type ChatMessageInfo = {
-    message: string;
-    level: number;
-    npc: string;
-    sessionMemory: SessionMemory;
-  }
-  // npc 메세지 응답
-  type NpcChatResponse = {
-    reply: string;
-    translation: string;
-  };
-  // 대화 내역 객체 (화면용)
-  type ChatHistory = {
-    role: "user" | "npc";
-    text: string;
-    translation?: string;
-  };
-  // 세션 대화 메모리 (대화용)
-  type SessionMemory = {
-    topic: string | null;
-    facts: Record<string, string>;
-    lastNpcQuestion: string | null;
-  };
-
+  // npc, 장소 변경시 대화 취소
+  const abortControllerRef = useRef<AbortController | null>(null);
   // 세션 메모리 리셋
   const resetSessionMemory = () => {
     setSessionMemory({
@@ -52,14 +39,26 @@ export default function Chat() {
 
   // npc, 장소 변경시 대화 초기화
   useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      isLoadingRef.current = false;
+    };
+  }, [npc, place]);
+
+  useEffect(() => {
     setChatHistory([]);
     resetSessionMemory();
+    setIsLoading(false);
   }, [npc, place]);
 
   // 유저 메세지 전송
   const sendMessage = (body: ChatMessageInfo) => {
-    // 빈 메세지는 return
-    if (!body.message.trim()) return;
+    // 빈 메시지 또는 응답 대기 중이면 전송하지 않음
+    if (!body.message.trim() || isLoadingRef.current) return;
+
+    isLoadingRef.current = true;
+    setIsLoading(true);
 
     // 대화내역에 새 메세지 추가
     setChatHistory(prev => [
@@ -69,28 +68,48 @@ export default function Chat() {
 
     setMessage("");
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     fetch(`/api/chat/user_talk`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     })
       .then(res => {
         if (!res.ok) throw new Error("채팅 요청 실패");
         return res.json();
       })
       .then((data: NpcChatResponse) => {
+        if (controller.signal.aborted) return;
+
         setChatHistory(prev => [
-          ...prev, {
+          ...prev,
+          {
             role: "npc",
             text: data.reply,
             translation: data.translation
           }
         ]);
+
+        setSessionMemory(data.sessionMemory);
+        setPlayerMemory(data.playerMemory);
       })
       .catch(error => {
+        if (error.name === "AbortError") return;
+
         console.error("채팅 오류:", error);
+      })
+      .finally(() => {
+        // 현재 요청일 때만 로딩 상태 해제
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+          isLoadingRef.current = false;
+          setIsLoading(false);
+        }
       });
   };
 
@@ -163,24 +182,38 @@ export default function Chat() {
         </div>
         <div className="h-24 bg-background">
           INPUT
-          <div className="border-lg flex shadow-lg">
-            <input
-              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3 rounded-lg "
-              placeholder="대화를 입력해주세요"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <button
-              className="bg-primary-light text-white rounded-r w-20 hover:bg-primary"
-              onClick={() =>
+          <div className="h-24 bg-background">
+            INPUT
+
+            <form
+              className="border-lg flex shadow-lg"
+              onSubmit={(e) => {
+                e.preventDefault();
+
                 sendMessage({
                   message: message,
                   level: level,
                   npc: npc,
-                  sessionMemory: sessionMemory
-                })
-              }
-            >입력</button>
+                  sessionMemory: sessionMemory,
+                  playerMemory: playerMemory
+                });
+              }}
+            >
+              <input
+                className="flex-1 bg-white rounded-lg outline-none pl-3 py-3"
+                placeholder="대화를 입력해주세요"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading || !message.trim()}
+                className="bg-primary-light text-white rounded-r w-20 hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "대기 중" : "입력"}
+              </button>
+            </form>
           </div>
         </div>
       </div>

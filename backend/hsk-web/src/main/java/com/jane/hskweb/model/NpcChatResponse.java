@@ -10,4 +10,6 @@ import lombok.Setter;
 public class NpcChatResponse {
     private String translation;
     private String reply;
+    private SessionMemory sessionMemory;
+    private PlayerMemory playerMemory;
 }
