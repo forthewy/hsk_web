@@ -1,19 +1,24 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function Layout() {
-    return (
-    <div className="min-h-screen flex flex-col">
-    <header className="h-16 bg-primary-light py-4">
+  const location = useLocation();
+  const isChatPage = location.pathname === "/chat";
+
+  return (
+    <div className="h-screen flex flex-col">
+      <header className="h-16 bg-primary-light py-4">
         <h1>HSK AI Chat</h1>
       </header>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto">
+      <main className="flex-1 min-h-0 w-full overflow-hidden">
         <Outlet />
       </main>
 
-      <footer className="h-20 bg-gray">
-        FOOTER
-      </footer>
+      {!isChatPage && (
+        <footer className="h-20 shrink-0 bg-gray">
+          FOOTER
+        </footer>
+      )}
     </div>
   );
 }

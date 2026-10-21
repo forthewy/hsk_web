@@ -115,11 +115,12 @@ export default function Chat() {
 
 
   return (
-    <div className="flex">
-      <div className="w-50 shrink-0 bg-slate-100">
+    <div className="mx-auto flex h-full max-w-7xl gap-6 px-6">
+      <div className="w-80  p-4 shrink-0 bg-slate-100">
         <h2 className="text-lg font-semibold">
           AI CHAT
         </h2>
+        {/* npc, 장소 선택 */}
         <PlaceNpcSelector
           place={place}
           npc={npc}
@@ -127,7 +128,7 @@ export default function Chat() {
           setNpc={setNpc}
         />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
         <div className="h-32 bg-background px-6 py-4">
           <div>
             <div className="flex justify-between">
@@ -148,8 +149,9 @@ export default function Chat() {
             <div>대화 주제</div>
           </div>
         </div>
-        <div className="h-96 bg-surface px-6 py-5 overflow-y-auto">
-          <div className="flex flex-col gap-6">
+        {/* 채팅창 */}
+    <div className="min-h-0 flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-6 py-5 overflow-y-auto">
+          <div className="flex flex-col  flex-1  gap-6">
             {chatHistory.map((msg, index) => (
               <div
                 key={index}
@@ -182,39 +184,36 @@ export default function Chat() {
         </div>
         <div className="h-24 bg-background">
           INPUT
-          <div className="h-24 bg-background">
-            INPUT
 
-            <form
-              className="border-lg flex shadow-lg"
-              onSubmit={(e) => {
-                e.preventDefault();
+          <form
+            className="border-lg flex shadow-lg"
+            onSubmit={(e) => {
+              e.preventDefault();
 
-                sendMessage({
-                  message: message,
-                  level: level,
-                  npc: npc,
-                  sessionMemory: sessionMemory,
-                  playerMemory: playerMemory
-                });
-              }}
+              sendMessage({
+                message: message,
+                level: level,
+                npc: npc,
+                sessionMemory: sessionMemory,
+                playerMemory: playerMemory
+              });
+            }}
+          >
+            <input
+              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3"
+              placeholder="대화를 입력해주세요"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+
+            <button
+              type="submit"
+              disabled={isLoading || !message.trim()}
+              className="bg-primary-light text-white rounded-r w-20 hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <input
-                className="flex-1 bg-white rounded-lg outline-none pl-3 py-3"
-                placeholder="대화를 입력해주세요"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading || !message.trim()}
-                className="bg-primary-light text-white rounded-r w-20 hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "대기 중" : "입력"}
-              </button>
-            </form>
-          </div>
+              {isLoading ? "대기 중" : "입력"}
+            </button>
+          </form>
         </div>
       </div>
     </div>
