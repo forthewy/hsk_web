@@ -1,6 +1,5 @@
 package com.jane.hskweb.npc;
 
-import com.jane.hskweb.model.NpcData;
 import com.jane.hskweb.model.PlayerMemory;
 import com.jane.hskweb.model.SessionMemory;
 import org.springframework.stereotype.Component;

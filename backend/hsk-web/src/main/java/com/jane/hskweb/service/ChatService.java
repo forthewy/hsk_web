@@ -1,6 +1,7 @@
 package com.jane.hskweb.service;
 
 import com.jane.hskweb.model.*;
+import com.jane.hskweb.npc.NpcData;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.core.JacksonException;
 import com.jane.hskweb.npc.NpcDataProvider;
@@ -86,9 +87,9 @@ public class ChatService {
             SessionMemory memory,
             String npcReply
     ) {
-            if (npcReply.contains("?") || npcReply.contains("？")) {
-                memory.setLastNpcQuestion(npcReply);
-            }
+        if (npcReply.contains("?") || npcReply.contains("？")) {
+            memory.setLastNpcQuestion(npcReply);
+        }
     }
 }
 

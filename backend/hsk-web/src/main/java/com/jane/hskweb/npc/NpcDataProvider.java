@@ -1,6 +1,5 @@
 package com.jane.hskweb.npc;
 
-import com.jane.hskweb.model.NpcData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

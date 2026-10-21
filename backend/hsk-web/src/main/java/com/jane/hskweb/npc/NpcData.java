@@ -1,4 +1,4 @@
-package com.jane.hskweb.model;
+package com.jane.hskweb.npc;
 
 import java.util.List;
 
