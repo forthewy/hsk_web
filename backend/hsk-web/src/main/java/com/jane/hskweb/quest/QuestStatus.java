@@ -1,4 +1,4 @@
-package com.jane.hskweb.model;
+package com.jane.hskweb.quest;
 
 public enum QuestStatus {
     NOT_STARTED,

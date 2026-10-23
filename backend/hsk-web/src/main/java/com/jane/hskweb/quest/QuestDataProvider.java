@@ -10,24 +10,21 @@ public class QuestDataProvider {
 
     private final Map<String, QuestDefinition> quests = Map.of(
 
-            "exam_schedule",
+            "self_introduction",
             new QuestDefinition(
-                    "exam_schedule",
+                    "self_introduction",
                     "teacher",
                     "school",
-                    "시험 일정 알아내기",
-                    "선생님에게 시험 날짜와 시간을 물어보세요.",
-                    Map.of(
-                            "examDate", "11월 10일",
-                            "examTime", "오전 9시"
-                    ),
-                    List.of("examDate", "examTime")
+                    "자기소개하기",
+                    "선생님에게 이름, 출신 국가, 취미를 소개하세요.",
+                    Map.of(),
+                    List.of("name", "country", "hobby")
             ),
 
             "coffee_order",
             new QuestDefinition(
                     "coffee_order",
-                    "cafe_clerk",
+                    "clerk",
                     "cafe",
                     "커피 주문하기",
                     "점원에게 원하는 커피를 주문하세요.",

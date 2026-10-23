@@ -1,6 +1,6 @@
 package com.jane.hskweb.service;
 
-import com.jane.hskweb.model.QuestStatus;
+import com.jane.hskweb.quest.QuestStatus;
 import com.jane.hskweb.quest.QuestDataProvider;
 import com.jane.hskweb.quest.QuestDefinition;
 import com.jane.hskweb.quest.QuestProgress;

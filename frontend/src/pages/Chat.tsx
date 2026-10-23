@@ -1,8 +1,30 @@
 import { useEffect, useState, useRef } from "react";
 import PlaceNpcSelector from "./PlaceNpcSelector";
-import type { ChatHistory, ChatMessageInfo, NpcChatResponse, PlayerMemory, SessionMemory } from "../types/chat";
+import type {
+  ChatHistory,
+  ChatMessageInfo,
+  NpcChatResponse,
+  PlayerMemory,
+  SessionMemory,
+  ChatSelection,
+  QuestDefinition,
+  QuestProgress
+} from "../types/chat";
+
 
 export default function Chat() {
+
+  const [selection, setSelection] = useState<ChatSelection>({
+    place: "school",
+    npc: "teacher",
+    chatMode: "FREE",
+    questId: null
+  });
+  const [quests, setQuests] = useState<QuestDefinition[]>([]);
+  const [questProgresses, setQuestProgresses] =
+    useState<Record<string, QuestProgress>>({});
+
+  const { place, npc, chatMode, questId } = selection;
   // 입력중 메세지
   const [message, setMessage] = useState("");
   // 채팅 내역 배열
@@ -17,10 +39,6 @@ export default function Chat() {
   const [playerMemory, setPlayerMemory] = useState<PlayerMemory>({
     facts: {}
   });
-  // 장소 선택
-  const [place, setPlace] = useState("school");
-  // npc 선택
-  const [npc, setNpc] = useState("teacher");
   const [level, setLevel] = useState(1);
   // NPC 응답 대기 상태
   const [isLoading, setIsLoading] = useState(false);
@@ -44,13 +62,27 @@ export default function Chat() {
       abortControllerRef.current = null;
       isLoadingRef.current = false;
     };
-  }, [npc, place]);
+  }, [npc, place, chatMode, questId]);
+
+  useEffect(() => {
+    fetch("/api/quests")
+      .then(res => {
+        if (!res.ok) throw new Error("퀘스트 목록 조회 실패");
+        return res.json();
+      })
+      .then((data: QuestDefinition[]) => {
+        setQuests(data);
+      })
+      .catch(error => {
+        console.error("퀘스트 조회 오류:", error);
+      });
+  }, []);
 
   useEffect(() => {
     setChatHistory([]);
     resetSessionMemory();
     setIsLoading(false);
-  }, [npc, place]);
+  }, [npc, place, chatMode, questId]);
 
   // 유저 메세지 전송
   const sendMessage = (body: ChatMessageInfo) => {
@@ -97,6 +129,12 @@ export default function Chat() {
 
         setSessionMemory(data.sessionMemory);
         setPlayerMemory(data.playerMemory);
+        if (data.questProgress) {
+          setQuestProgresses(prev => ({
+            ...prev,
+            [data.questProgress!.questId]: data.questProgress!
+          }));
+        }
       })
       .catch(error => {
         if (error.name === "AbortError") return;
@@ -120,12 +158,11 @@ export default function Chat() {
         <h2 className="text-lg font-semibold">
           AI CHAT
         </h2>
-        {/* npc, 장소 선택 */}
+        {/* npc, 장소, 퀘스트 선택 */}
         <PlaceNpcSelector
-          place={place}
-          npc={npc}
-          setPlace={setPlace}
-          setNpc={setNpc}
+          selection={selection}
+          onSelect={setSelection}
+          quests={quests}
         />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
@@ -150,7 +187,7 @@ export default function Chat() {
           </div>
         </div>
         {/* 채팅창 */}
-    <div className="min-h-0 flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-6 py-5 overflow-y-auto">
+        <div className="min-h-0 flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-6 py-5 overflow-y-auto">
           <div className="flex flex-col  flex-1  gap-6">
             {chatHistory.map((msg, index) => (
               <div
@@ -194,8 +231,14 @@ export default function Chat() {
                 message: message,
                 level: level,
                 npc: npc,
+                chatMode: chatMode,
+                questId: questId,
                 sessionMemory: sessionMemory,
-                playerMemory: playerMemory
+                playerMemory: playerMemory,
+                questProgress:
+                  chatMode === "QUEST" && questId
+                    ? questProgresses[questId] ?? null
+                    : null
               });
             }}
           >

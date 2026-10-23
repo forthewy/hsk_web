@@ -1,3 +1,6 @@
 spring:
   application:
     name: hsk-web
+logging:
+  level:
+    com.jane.hskweb.service.ChatService: DEBUG

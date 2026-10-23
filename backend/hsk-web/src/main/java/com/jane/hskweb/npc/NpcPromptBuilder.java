@@ -3,6 +3,7 @@ package com.jane.hskweb.npc;
 import com.jane.hskweb.model.PlayerMemory;
 import com.jane.hskweb.model.SessionMemory;
 import org.springframework.stereotype.Component;
+import com.jane.hskweb.quest.QuestDefinition;
 
 import java.util.stream.Collectors;
 
@@ -18,7 +19,7 @@ public class NpcPromptBuilder {
 
         return """
             당신은 %s입니다.
-
+            
             역할:
             %s
 
@@ -29,12 +30,6 @@ public class NpcPromptBuilder {
                 npc.role(),
                 personalities
         );
-    }
-
-    public String buildMustPrompt() {
-        return """
-                당신은 중국어로 말합니다.
-                """;
     }
 
     public String buildOutputPrompt() {
@@ -57,13 +52,15 @@ public class NpcPromptBuilder {
             NpcData npc,
             String playerMessage,
             SessionMemory updatedMemory,
-            PlayerMemory playerMemory
+            PlayerMemory playerMemory,
+            String questPrompt
     ) {
         return """
         ===== ROLE =====
+        당신은 중국어 학습을 위한 npc입니다.
+        
         %s
-
-        ===== MUST =====
+                
         %s
 
         ===== MEMORY =====
@@ -88,13 +85,35 @@ public class NpcPromptBuilder {
         ===== NPC =====
         """.formatted(
                 buildRolePrompt(npc),
-                buildMustPrompt(),
+                questPrompt,
                 updatedMemory.getTopic(),
                 updatedMemory.getFacts(),
                 updatedMemory.getLastNpcQuestion(),
                 playerMemory.getFacts(),
                 buildOutputPrompt(),
                 playerMessage
+        );
+    }
+
+    public String buildQuestPrompt(QuestDefinition quest) {
+        return """
+            ===== QUEST =====
+            현재 퀘스트: %s
+
+            목표: %s
+
+            NPC가 알고 있는 정보:
+            %s
+
+            퀘스트 목표에 맞춰 자연스럽게 대화하세요.
+            정보를 한 번에 모두 제공하지 마세요.
+
+            퀘스트와 관계없는 질문에도
+            NPC의 성격에 맞춰 자연스럽게 대답하세요.
+            """.formatted(
+                quest.title(),
+                quest.description(),
+                quest.npcFacts()
         );
     }
 }

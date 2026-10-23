@@ -19,6 +19,6 @@ public class ChatController {
     @PostMapping("/user_talk")
     public NpcChatResponse chat(@RequestBody ChatMessageInfo chatMessageInfo) {
 
-        return chatService.Chat(chatMessageInfo);
+        return chatService.chat(chatMessageInfo);
     }
 }
