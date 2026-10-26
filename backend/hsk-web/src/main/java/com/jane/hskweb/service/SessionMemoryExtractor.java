@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -17,8 +18,26 @@ public class SessionMemoryExtractor {
 
     public SessionMemory extract(
             String playerMessage,
-            SessionMemory currentMemory
+            SessionMemory currentMemory,
+            List<String> requiredFacts
+
     ) {
+
+        String questRules = "";
+
+        if (requiredFacts != null && !requiredFacts.isEmpty()) {
+            questRules = """
+            현재 퀘스트에서 수집해야 하는 정보:
+            %s
+
+            - 위 목록에 있는 정보를 우선 추출하세요.
+            - 추출한 정보는 반드시 목록에 지정된 키 이름으로 반환하세요.
+            - 필수 정보에 해당하는 사실은 다른 키 이름으로 중복 추출하지 마세요.
+            - 한 번의 발화에서 여러 정보가 확인되면 모두 추출하세요.
+            """.formatted(requiredFacts);
+        }
+
+
         String prompt = """
                 너는 대화를 이어가기 위해 필요한
                 임시 정보를 추출하는 JSON 추출기이다.
@@ -32,13 +51,12 @@ public class SessionMemoryExtractor {
                 규칙:
                 - 플레이어의 발화에서 확인된 사실만 추출하세요.
                 - 현재 대화 주제와 관련된 사실만 추출하세요.
-                - 기존 topic과 facts를 참고하여
-                  새로운 발화가 어떤 정보를 의미하는지 판단하세요.
                 - 추출할 정보가 없으면 facts는 빈 객체 {}로 출력하세요.
                 - 기존 facts와 일치하지 않는 정보를 제공하면 같은 키값으로 새로운 value 를 입력한다.
                 - 결과는 반드시 JSON 객체 하나만 출력하세요.
                 - 플레이어의 이름은 반드시 "name" 키로 추출한다.
-                - 플레이어가 좋아하는 대상은 반드시 "preference" 키로 추출한다.
+                    
+                     %s
                 
                         출력 형식:
                 {
@@ -49,7 +67,8 @@ public class SessionMemoryExtractor {
                 JSON 출력:
                 """.formatted(
                 objectMapper.writeValueAsString(currentMemory),
-                playerMessage
+                playerMessage,
+                questRules
         );
 
 

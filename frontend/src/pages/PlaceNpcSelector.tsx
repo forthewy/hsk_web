@@ -1,10 +1,11 @@
-import type { ChatSelection, QuestDefinition } from "../types/chat";
+import type { ChatSelection, QuestDefinition, QuestProgress } from "../types/chat";
 
 
 type PlaceNpcSelectorProps = {
     selection: ChatSelection;
     onSelect: (selection: ChatSelection) => void;
     quests: QuestDefinition[];
+    questProgresses: Record<string, QuestProgress>;
 };
 
 // 장소
@@ -20,6 +21,16 @@ const npcs = [
     { id: "clerk", name: "점원", placeId: "cafe" },
 ];
 
+// 퀘스트 수집정보
+const factLabels: Record<string, string> = {
+    name: "이름",
+    country: "출신 국가",
+    hobby: "취미",
+    drink: "음료",
+    temperature: "온도",
+    paymentMethod: "결제 수단",
+};
+
 // 퀘스트 npc
 const getNpcName = (npcId: string) => {
     return npcs.find(item => item.id === npcId)?.name ?? npcId;
@@ -29,6 +40,7 @@ export default function PlaceNpcSelector({
     selection,
     onSelect,
     quests,
+    questProgresses,
 }: PlaceNpcSelectorProps) {
 
     const { place, npc, chatMode, questId } = selection;
@@ -69,8 +81,8 @@ export default function PlaceNpcSelector({
                             key={item.id}
                             type="button"
                             className={`w-full py-3 rounded ${npc === item.id
-                                    ? "bg-background text-primary-light font-bold"
-                                    : "text-slate-500 hover:bg-white"
+                                ? "bg-background text-primary-light font-bold"
+                                : "text-slate-500 hover:bg-white"
                                 }`}
                             onClick={() => onSelect({
                                 place,
@@ -91,35 +103,60 @@ export default function PlaceNpcSelector({
 
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-3">
-                        {quests.map(quest => (
-                            <button
-                                key={quest.id}
-                                type="button"
-                                className={`w-full rounded-xl p-4 text-left
-                                ${chatMode === "QUEST" && questId === quest.id
-                                        ? "bg-primary-lighter"
-                                        : "bg-surface hover:bg-primary-lighter"
-                                    }`}
-                                onClick={() => onSelect({
-                                    place: quest.placeId,
-                                    npc: quest.npcId,
-                                    chatMode: "QUEST",
-                                    questId: quest.id
-                                })}
-                            >
-                                <div className="font-semibold">
-                                    {quest.title}
-                                </div>
+                        {quests.map(quest => {
+                            const isCompleted =
+                                questProgresses[quest.id]?.status === "COMPLETED";
 
-                                <p className="mt-1 text-sm text-secondary">
-                                    {quest.description}
-                                </p>
+                            return (
+                                <button
+                                    key={quest.id}
+                                    type="button"
+                                    disabled={isCompleted}
+                                    className={`w-full rounded-xl p-4 text-left
+                ${isCompleted
+                                            ? "bg-gray-200 opacity-60 cursor-not-allowed"
+                                            : chatMode === "QUEST" && questId === quest.id
+                                                ? "bg-primary-lighter"
+                                                : "bg-surface hover:bg-primary-lighter"
+                                        }`}
+                                    onClick={() => onSelect({
+                                        place: quest.placeId,
+                                        npc: quest.npcId,
+                                        chatMode: "QUEST",
+                                        questId: quest.id
+                                    })}
+                                >
+                                    <div className="flex items-center justify-between font-semibold">
+                                        <span>{quest.title}</span>
 
-                                <div className="mt-3 text-sm text-primary font-semibold">
-                                    대화 NPC: {getNpcName(quest.npcId)} →
-                                </div>
-                            </button>
-                        ))}
+                                        {isCompleted && (
+                                            <span className="text-xs text-green-700">
+                                                ✓ 완료
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <p className="mt-1 text-sm text-secondary">
+                                        {quest.description}
+                                    </p>
+
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {quest.requiredFacts.map(fact => (
+                                            <span
+                                                key={fact}
+                                                className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600"
+                                            >
+                                                {factLabels[fact] ?? fact}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-3 text-sm text-primary font-semibold">
+                                        대화 NPC: {getNpcName(quest.npcId)} →
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

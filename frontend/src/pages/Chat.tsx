@@ -25,6 +25,12 @@ export default function Chat() {
     useState<Record<string, QuestProgress>>({});
 
   const { place, npc, chatMode, questId } = selection;
+
+  const isQuestCompleted =
+    chatMode === "QUEST" &&
+    questId !== null &&
+    questProgresses[questId]?.status === "COMPLETED";
+
   // 입력중 메세지
   const [message, setMessage] = useState("");
   // 채팅 내역 배열
@@ -87,7 +93,7 @@ export default function Chat() {
   // 유저 메세지 전송
   const sendMessage = (body: ChatMessageInfo) => {
     // 빈 메시지 또는 응답 대기 중이면 전송하지 않음
-    if (!body.message.trim() || isLoadingRef.current) return;
+    if (!body.message.trim() || isLoadingRef.current || isQuestCompleted) return;
 
     isLoadingRef.current = true;
     setIsLoading(true);
@@ -163,6 +169,7 @@ export default function Chat() {
           selection={selection}
           onSelect={setSelection}
           quests={quests}
+          questProgresses={questProgresses}
         />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
@@ -217,6 +224,21 @@ export default function Chat() {
                 </div>
               </div>
             ))}
+            {isQuestCompleted && (
+              <div className="mx-auto w-full max-w-md rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+                <div className="text-lg font-bold text-green-700">
+                  퀘스트 완료!
+                </div>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  필요한 정보를 모두 수집했습니다.
+                </p>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  다른 퀘스트를 선택하거나 자유 대화를 시작하세요.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <div className="h-24 bg-background">
@@ -243,18 +265,23 @@ export default function Chat() {
             }}
           >
             <input
-              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3"
-              placeholder="대화를 입력해주세요"
+              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder={
+                isQuestCompleted
+                  ? "완료된 퀘스트입니다"
+                  : "대화를 입력해주세요"
+              }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              disabled={isLoading || isQuestCompleted}
             />
 
             <button
               type="submit"
-              disabled={isLoading || !message.trim()}
+              disabled={isLoading || isQuestCompleted || !message.trim()}
               className="bg-primary-light text-white rounded-r w-20 hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "대기 중" : "입력"}
+              {isQuestCompleted ? "완료" : isLoading ? "대기 중" : "입력"}
             </button>
           </form>
         </div>

@@ -2,6 +2,7 @@ package com.jane.hskweb.npc;
 
 import com.jane.hskweb.model.PlayerMemory;
 import com.jane.hskweb.model.SessionMemory;
+import com.jane.hskweb.quest.QuestProgress;
 import org.springframework.stereotype.Component;
 import com.jane.hskweb.quest.QuestDefinition;
 
@@ -95,7 +96,11 @@ public class NpcPromptBuilder {
         );
     }
 
-    public String buildQuestPrompt(QuestDefinition quest) {
+    public String buildQuestPrompt(
+            QuestDefinition quest,
+            QuestProgress progress,
+            String nextRequiredFact
+    ) {
         return """
             ===== QUEST =====
             현재 퀘스트: %s
@@ -105,15 +110,25 @@ public class NpcPromptBuilder {
             NPC가 알고 있는 정보:
             %s
 
-            퀘스트 목표에 맞춰 자연스럽게 대화하세요.
-            정보를 한 번에 모두 제공하지 마세요.
+            이미 수집한 정보:
+            %s
 
-            퀘스트와 관계없는 질문에도
-            NPC의 성격에 맞춰 자연스럽게 대답하세요.
+            다음 질문 대상:
+            %s
+
+            규칙:
+            - 다음 질문 대상이 있으면 해당 정보를 얻기 위한 질문을 우선하세요.
+            - 한 번에 하나의 질문만 하세요.
+            - 이미 수집한 정보는 다시 질문하지 마세요.
+            - 다음 질문 대상이 없으면 퀘스트를 자연스럽게 마무리하세요.
+            - 퀘스트와 관계없는 질문에도 NPC의 성격에 맞춰 자연스럽게 대답하세요.
+
             """.formatted(
                 quest.title(),
                 quest.description(),
-                quest.npcFacts()
+                quest.npcFacts(),
+                progress.getCollectedFacts(),
+                nextRequiredFact == null ? "없음 (퀘스트 완료)" : nextRequiredFact
         );
     }
 }

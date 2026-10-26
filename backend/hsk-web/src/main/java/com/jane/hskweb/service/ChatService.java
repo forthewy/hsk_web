@@ -30,35 +30,19 @@ public class ChatService {
 
     public NpcChatResponse chat(ChatMessageInfo chatMessageInfo) {
 
-        log.debug("SessionMemory 기존: {}", chatMessageInfo.getSessionMemory());
+        QuestProgress questProgress = questService.prepareQuest(chatMessageInfo);
 
-        // 퀘스트 프롬프트 조회
-        String questPrompt = getQuestPrompt(chatMessageInfo);
-
-        QuestProgress questProgress = null;
-
-        if (chatMessageInfo.getChatMode() == ChatMode.QUEST) {
-            questProgress = chatMessageInfo.getQuestProgress();
-
-            if (questProgress == null) {
-                questProgress = new QuestProgress(chatMessageInfo.getQuestId());
-            }
-
-            if (!questProgress.getQuestId().equals(chatMessageInfo.getQuestId())) {
-                throw new IllegalArgumentException("퀘스트 ID가 일치하지 않습니다.");
-            }
-
-            questService.startQuest(questProgress);
-        }
-
-
+        List<String> requiredFacts = questService.getRequiredFacts(questProgress);
 
         // 메모리 추출 (제미나이)
         SessionMemory updatedMemory = sessionMemoryExtractor.extract(
                 chatMessageInfo.getMessage(),
-                chatMessageInfo.getSessionMemory()
+                chatMessageInfo.getSessionMemory(),
+                requiredFacts
         );
-        log.debug("SessionMemory 추출 결과: {}", updatedMemory.getFacts());
+
+        log.debug("추출 대상 키: {}", requiredFacts);
+        log.debug("추출된 facts: {}", updatedMemory.getFacts());
 
         PlayerMemory playerMemory = chatMessageInfo.getPlayerMemory();
 
@@ -68,10 +52,20 @@ public class ChatService {
                     updatedMemory.getFacts()
             );
 
-            log.debug("퀘스트 진행 상태: {}, 수집 정보: {}",
-                    questProgress.getStatus(),
-                    questProgress.getCollectedFacts());
+            log.debug("퀘스트 ID: {}", questProgress.getQuestId());
+            log.debug("퀘스트 상태: {}", questProgress.getStatus());
+            log.debug("퀘스트 수집 정보: {}", questProgress.getCollectedFacts());
         }
+
+        // 현재 메시지까지 반영한 후 다음 질문 결정
+        String nextRequiredFact =
+                questService.getNextRequiredFact(questProgress);
+
+        String questPrompt =
+                getQuestPrompt(questProgress, nextRequiredFact);
+
+        log.debug("다음 수집 대상: {}", nextRequiredFact);
+
 
         for (String key : List.of("name", "preference")) {
             String value = updatedMemory.getFacts().get(key);
@@ -136,29 +130,23 @@ public class ChatService {
     }
 
     // 퀘스트 프롬프트
-    private String getQuestPrompt(ChatMessageInfo chatMessageInfo) {
+    private String getQuestPrompt(
+            QuestProgress questProgress,
+            String nextRequiredFact
+    ) {
 
-        if (chatMessageInfo.getChatMode() != ChatMode.QUEST) {
+        if (questProgress == null) {
             return "";
         }
 
-        String questId = chatMessageInfo.getQuestId();
+        QuestDefinition quest =
+                questDataProvider.getQuest(questProgress.getQuestId());
 
-        if (questId == null || questId.isBlank()) {
-            throw new IllegalArgumentException(
-                    "퀘스트 대화에는 questId가 필요합니다."
-            );
-        }
-
-        QuestDefinition quest = questDataProvider.getQuest(questId);
-
-        if (!quest.npcId().equals(chatMessageInfo.getNpc())) {
-            throw new IllegalArgumentException(
-                    "퀘스트와 NPC가 일치하지 않습니다."
-            );
-        }
-
-        return npcPromptBuilder.buildQuestPrompt(quest);
+        return npcPromptBuilder.buildQuestPrompt(
+                quest,
+                questProgress,
+                nextRequiredFact
+        );
     }
 }
 

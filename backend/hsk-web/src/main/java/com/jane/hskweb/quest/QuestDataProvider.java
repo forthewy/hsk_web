@@ -29,7 +29,7 @@ public class QuestDataProvider {
                     "커피 주문하기",
                     "점원에게 원하는 커피를 주문하세요.",
                     Map.of(),
-                    List.of("drink", "temperature", "orderConfirmed")
+                    List.of("drink", "temperature", "paymentMethod")
             )
     );
 
