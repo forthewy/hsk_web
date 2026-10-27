@@ -17,6 +17,17 @@ export type ChatSelection = {
   questId: string | null;
 };
 
+// npc 데이타 타입
+export type NpcData = {
+  id: string;
+  name: string;
+  role: string;
+  personalities: string[];
+  topics: string[];
+  greeting: string;
+  greetingTranslation: string;
+};
+
 // 퀘스트 타입
 export type QuestDefinition = {
   id: string;

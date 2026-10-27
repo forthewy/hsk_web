@@ -8,7 +8,8 @@ import type {
   SessionMemory,
   ChatSelection,
   QuestDefinition,
-  QuestProgress
+  QuestProgress,
+  NpcData
 } from "../types/chat";
 
 
@@ -69,6 +70,51 @@ export default function Chat() {
       isLoadingRef.current = false;
     };
   }, [npc, place, chatMode, questId]);
+  //npc 변경시 초기화
+  useEffect(() => {
+    setChatHistory([]);
+    resetSessionMemory();
+    setIsLoading(false);
+
+
+    const controller = new AbortController();
+
+    fetch(`/api/npcs/${npc}/greeting`, {
+      signal: controller.signal
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error("NPC 인삿말 조회 실패");
+        }
+        return res.json();
+      })
+      .then((data: {
+        greeting: string;
+        greetingTranslation: string;
+      }) => {
+        if (controller.signal.aborted) return;
+
+        setChatHistory([{
+          role: "npc",
+          text: data.greeting,
+          translation: data.greetingTranslation
+        }]);
+
+        setSessionMemory({
+          topic: null,
+          facts: {},
+          lastNpcQuestion: data.greeting
+        });
+      })
+      .catch(error => {
+        if (error.name !== "AbortError") {
+          console.error(error);
+        }
+      });
+
+    return () => controller.abort();
+
+  }, [npc, place, chatMode, questId]);
 
   useEffect(() => {
     fetch("/api/quests")
@@ -84,11 +130,7 @@ export default function Chat() {
       });
   }, []);
 
-  useEffect(() => {
-    setChatHistory([]);
-    resetSessionMemory();
-    setIsLoading(false);
-  }, [npc, place, chatMode, questId]);
+
 
   // 유저 메세지 전송
   const sendMessage = (body: ChatMessageInfo) => {

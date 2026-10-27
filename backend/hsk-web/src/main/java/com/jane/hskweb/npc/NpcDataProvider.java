@@ -1,48 +1,68 @@
 package com.jane.hskweb.npc;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class NpcDataProvider {
 
-    private final Map<String, NpcData> npcMap = Map.of(
-            "student",
-            new NpcData(
-                    "student",
-                    "小明",
-                    "학교에 다니는 학생",
-                    List.of("친근하게 말한다"),
-                    List.of("학교", "친구", "숙제")
-            ),
-
-            "teacher",
-            new NpcData(
-                    "teacher",
-                    "王老师",
-                    "학교 선생님",
-                    List.of("친절하다"),
-                    List.of("학교", "공부")
-            ),
-            "clerk",
-            new NpcData(
-                    "clerk",
-                    "",
-                    "카페 점원",
-                    List.of("예의바르게 말한다"),
-                    List.of("주문", "커피숍")
-            )
-    );
+    private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
 
     public NpcData getNpc(String npcId) {
-        NpcData npc = npcMap.get(npcId);
 
-        if (npc == null) {
-            throw new IllegalArgumentException("존재하지 않는 NPC입니다: " + npcId);
+        String sql = """
+                SELECT
+                    id,
+                    name,
+                    npc_role,
+                    personality,
+                    topics,
+                    greeting,
+                    greeting_translation
+                FROM npcs
+                WHERE id = ?
+                """;
+
+        List<NpcData> results = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new NpcData(
+                        rs.getString("id"),
+                        rs.getString("name"),
+                        rs.getString("npc_role"),
+                        parseJsonList(rs.getString("personality")),
+                        parseJsonList(rs.getString("topics")),
+                        rs.getString("greeting"),
+                        rs.getString("greeting_translation")
+                ),
+                npcId
+        );
+
+        if (results.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "존재하지 않는 NPC입니다: " + npcId
+            );
         }
 
-        return npc;
+        return results.get(0);
+    }
+
+    private List<String> parseJsonList(String json) {
+        try {
+            return objectMapper.readValue(
+                    json,
+                    new TypeReference<List<String>>() {}
+            );
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "NPC JSON 데이터 변환 실패", e
+            );
+        }
     }
 }

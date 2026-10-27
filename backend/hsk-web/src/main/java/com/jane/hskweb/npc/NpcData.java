@@ -7,6 +7,8 @@ public record NpcData(
         String name,
         String role,
         List<String> personalities,
-        List<String> topics
+        List<String> topics,
+        String greeting,
+        String greetingTranslation
 ) {
 }
