@@ -2,13 +2,13 @@ package com.jane.hskweb.service;
 
 import com.jane.hskweb.model.*;
 import com.jane.hskweb.npc.NpcData;
+import com.jane.hskweb.npc.NpcRepository;
 import com.jane.hskweb.quest.QuestDataProvider;
 import com.jane.hskweb.quest.QuestDefinition;
 import com.jane.hskweb.quest.QuestProgress;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.core.JacksonException;
-import com.jane.hskweb.npc.NpcDataProvider;
 import com.jane.hskweb.npc.NpcPromptBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,12 +21,12 @@ import java.util.List;
 public class ChatService {
 
     private final GeminiService geminiService;
-    private final NpcDataProvider npcDataProvider;
     private final NpcPromptBuilder npcPromptBuilder;
     private final ObjectMapper objectMapper;
     private final SessionMemoryExtractor sessionMemoryExtractor;
     private final QuestDataProvider questDataProvider;
     private final QuestService questService;
+    private final NpcRepository npcRepository;
 
     public NpcChatResponse chat(ChatMessageInfo chatMessageInfo) {
 
@@ -78,9 +78,7 @@ public class ChatService {
         System.out.println("추출된 기억: " + updatedMemory.getFacts());
 
         // NPC 정보 조회
-        NpcData npc = npcDataProvider.getNpc(
-                chatMessageInfo.getNpc()
-        );
+        NpcData npc = npcRepository.getNpc();
 
 
 

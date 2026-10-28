@@ -1,4 +1,9 @@
-import type { ChatSelection, QuestDefinition, QuestProgress } from "../types/chat";
+import type {
+    ChatSelection,
+    QuestDefinition,
+    QuestProgress,
+    NpcData
+} from "../types/chat";
 
 
 type PlaceNpcSelectorProps = {
@@ -6,19 +11,13 @@ type PlaceNpcSelectorProps = {
     onSelect: (selection: ChatSelection) => void;
     quests: QuestDefinition[];
     questProgresses: Record<string, QuestProgress>;
+    npcs: NpcData[];
 };
 
 // 장소
 const places = [
     { id: "school", name: "학교", defaultNpc: "teacher" },
     { id: "cafe", name: "카페", defaultNpc: "clerk" },
-];
-
-// npc 들
-const npcs = [
-    { id: "teacher", name: "선생님", placeId: "school" },
-    { id: "student", name: "학생", placeId: "school" },
-    { id: "clerk", name: "점원", placeId: "cafe" },
 ];
 
 // 퀘스트 수집정보
@@ -31,18 +30,18 @@ const factLabels: Record<string, string> = {
     paymentMethod: "결제 수단",
 };
 
-// 퀘스트 npc
-const getNpcName = (npcId: string) => {
-    return npcs.find(item => item.id === npcId)?.name ?? npcId;
-};
-
 export default function PlaceNpcSelector({
     selection,
     onSelect,
     quests,
     questProgresses,
+    npcs,
 }: PlaceNpcSelectorProps) {
 
+    // npc 이름
+    const getNpcName = (npcId: string) => {
+        return npcs.find(item => item.id === npcId)?.name ?? npcId;
+    };
     const { place, npc, chatMode, questId } = selection;
     return <>
         <div>

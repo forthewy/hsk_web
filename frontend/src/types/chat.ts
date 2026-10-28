@@ -22,6 +22,7 @@ export type NpcData = {
   id: string;
   name: string;
   role: string;
+  placeId: string;
   personalities: string[];
   topics: string[];
   greeting: string;

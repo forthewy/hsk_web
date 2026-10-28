@@ -21,11 +21,14 @@ export default function Chat() {
     chatMode: "FREE",
     questId: null
   });
+  const { place, npc, chatMode, questId } = selection;
+  // 퀘스트
   const [quests, setQuests] = useState<QuestDefinition[]>([]);
   const [questProgresses, setQuestProgresses] =
     useState<Record<string, QuestProgress>>({});
+  // npc 목록 조회
+  const [npcs, setNpcs] = useState<NpcData[]>([]);
 
-  const { place, npc, chatMode, questId } = selection;
 
   const isQuestCompleted =
     chatMode === "QUEST" &&
@@ -70,52 +73,41 @@ export default function Chat() {
       isLoadingRef.current = false;
     };
   }, [npc, place, chatMode, questId]);
-  //npc 변경시 초기화
+
+  // npc 목록 가져오기
   useEffect(() => {
-    setChatHistory([]);
-    resetSessionMemory();
-    setIsLoading(false);
-
-
-    const controller = new AbortController();
-
-    fetch(`/api/npcs/${npc}/greeting`, {
-      signal: controller.signal
-    })
+    fetch("/api/chat/npcs")
       .then(res => {
-        if (!res.ok) {
-          throw new Error("NPC 인삿말 조회 실패");
-        }
+        if (!res.ok) throw new Error("NPC 목록 조회 실패");
         return res.json();
       })
-      .then((data: {
-        greeting: string;
-        greetingTranslation: string;
-      }) => {
-        if (controller.signal.aborted) return;
+      .then((data: NpcData[]) => setNpcs(data))
+      .catch(console.error);
+  }, []);
 
-        setChatHistory([{
-          role: "npc",
-          text: data.greeting,
-          translation: data.greetingTranslation
-        }]);
+  // NPC, 장소, 대화 모드 변경 시 초기화
+  useEffect(() => {
+    const selectedNpc = npcs.find(item => item.id === npc);
 
-        setSessionMemory({
-          topic: null,
-          facts: {},
-          lastNpcQuestion: data.greeting
-        });
-      })
-      .catch(error => {
-        if (error.name !== "AbortError") {
-          console.error(error);
-        }
-      });
+    if (!selectedNpc) return;
 
-    return () => controller.abort();
+    setChatHistory([{
+      role: "npc",
+      text: selectedNpc.greeting,
+      translation: selectedNpc.greetingTranslation
+    }]);
 
-  }, [npc, place, chatMode, questId]);
+    setSessionMemory({
+      topic: null,
+      facts: {},
+      lastNpcQuestion: selectedNpc.greeting
+    });
 
+    setIsLoading(false);
+
+  }, [npc, place, chatMode, questId, npcs]);
+
+  // 퀘스트 조회
   useEffect(() => {
     fetch("/api/quests")
       .then(res => {
@@ -212,27 +204,25 @@ export default function Chat() {
           onSelect={setSelection}
           quests={quests}
           questProgresses={questProgresses}
+          npcs={npcs}
         />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-        <div className="h-32 bg-background px-6 py-4">
-          <div>
-            <div className="flex justify-between">
-              {[1, 2, 3, 4, 5, 6].map((levelItem) => (
-                <button
-                  key={levelItem}
-                  onClick={() => setLevel(levelItem)}
-                  className={
-                    level === levelItem
-                      ? "bg-primary-light text-white  font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
-                      : "bg-gray font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
-                  }
-                >
-                  HSK {levelItem}급
-                </button>
-              ))}
-            </div>
-            <div>대화 주제</div>
+        <div className="h-20 bg-background px-6 py-4">
+          <div className="flex justify-between">
+            {[1, 2, 3, 4, 5, 6].map((levelItem) => (
+              <button
+                key={levelItem}
+                onClick={() => setLevel(levelItem)}
+                className={
+                  level === levelItem
+                    ? "bg-primary-light text-white  font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
+                    : "bg-gray font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
+                }
+              >
+                HSK {levelItem}급
+              </button>
+            ))}
           </div>
         </div>
         {/* 채팅창 */}
@@ -246,12 +236,12 @@ export default function Chat() {
               >
                 <div className="flex flex-col gap-1 max-w-xl">
                   <div
-                    className={`break-words px-4 py-3 rounded-2xl ${msg.role === "user"
-                      ? "bg-primary-light text-white rounded-br-sm"
-                      : "bg-secondary rounded-tl-sm"
+                    className={`break-words px-4 py-3 text-2xl rounded-full ${msg.role === "user"
+                      ? "bg-primary-light text-white rounded-br-none"
+                      : "bg-gray-light rounded-bl-none"
                       }`}
                   >
-                    <p>{msg.text}</p>
+                    <p className="font-light antialiased">{msg.text}</p>
 
                     {msg.translation && (
                       <p className="mt-2 text-sm opacity-70">
