@@ -1,26 +1,23 @@
 import { useEffect, useState, useRef } from "react";
-import PlaceNpcSelector from "./PlaceNpcSelector";
+import PlaceNpcSelector from "./components/PlaceNpcSelector";
 import type {
   ChatHistory,
   ChatMessageInfo,
   NpcChatResponse,
   PlayerMemory,
   SessionMemory,
-  ChatSelection,
   QuestDefinition,
   QuestProgress,
   NpcData
-} from "../types/chat";
+} from "./types/chat";
+import LevelSelector from "./components/LevelSelector";
+import ChatMessageList from "./components/ChatMessageList";
+import { useChatSelection } from "./hooks/useChatSelection";
 
 
 export default function Chat() {
 
-  const [selection, setSelection] = useState<ChatSelection>({
-    place: "school",
-    npc: "teacher",
-    chatMode: "FREE",
-    questId: null
-  });
+  const { selection, setSelection } = useChatSelection();
   const [quests, setQuests] = useState<QuestDefinition[]>([]);
   const [questProgresses, setQuestProgresses] =
     useState<Record<string, QuestProgress>>({});
@@ -79,7 +76,7 @@ export default function Chat() {
 
     const controller = new AbortController();
 
-    fetch(`/api/npcs/${npc}/greeting`, {
+    fetch(`/api/chat/${npc}`, {
       signal: controller.signal
     })
       .then(res => {
@@ -160,7 +157,15 @@ export default function Chat() {
       signal: controller.signal,
     })
       .then(res => {
-        if (!res.ok) throw new Error("채팅 요청 실패");
+        if (!res.ok) {
+          if (res.status === 429) {
+            throw new Error(
+              "오늘의 AI 대화 횟수를 모두 사용했어요. 내일 다시 이용해 주세요."
+            );
+          }
+
+          throw new Error("채팅 요청 실패");
+        }
         return res.json();
       })
       .then((data: NpcChatResponse) => {
@@ -215,57 +220,18 @@ export default function Chat() {
         />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-        <div className="h-32 bg-background px-6 py-4">
-          <div>
-            <div className="flex justify-between">
-              {[1, 2, 3, 4, 5, 6].map((levelItem) => (
-                <button
-                  key={levelItem}
-                  onClick={() => setLevel(levelItem)}
-                  className={
-                    level === levelItem
-                      ? "bg-primary-light text-white  font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
-                      : "bg-gray font-semibold px-6 py-2 m-2 rounded whitespace-nowrap"
-                  }
-                >
-                  HSK {levelItem}급
-                </button>
-              ))}
-            </div>
-            <div>대화 주제</div>
-          </div>
-        </div>
+
+        {/* 레벨 선택 */}
+        <LevelSelector level={level} onChange={setLevel} />
+
         {/* 채팅창 */}
         <div className="min-h-0 flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-6 py-5 overflow-y-auto">
           <div className="flex flex-col  flex-1  gap-6">
-            {chatHistory.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-              >
-                <div className="flex flex-col gap-1 max-w-xl">
-                  <div
-                    className={`break-words px-4 py-3 rounded-2xl ${msg.role === "user"
-                      ? "bg-primary-light text-white rounded-br-sm"
-                      : "bg-secondary rounded-tl-sm"
-                      }`}
-                  >
-                    <p>{msg.text}</p>
-
-                    {msg.translation && (
-                      <p className="mt-2 text-sm opacity-70">
-                        {msg.translation}
-                      </p>
-                    )}
-                  </div>
-
-                  <span className="text-xs text-gray-500">
-                    {msg.role === "user" ? "나" : npc}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {/* 채팅 내역 */}
+            <ChatMessageList
+              history={chatHistory}
+              npc={npc}
+            />
             {isQuestCompleted && (
               <div className="mx-auto w-full max-w-md rounded-xl border border-green-200 bg-green-50 p-5 text-center">
                 <div className="text-lg font-bold text-green-700">

@@ -5,7 +5,10 @@ import com.jane.hskweb.npc.NpcData;
 import com.jane.hskweb.quest.QuestDataProvider;
 import com.jane.hskweb.quest.QuestDefinition;
 import com.jane.hskweb.quest.QuestProgress;
+import com.jane.hskweb.usageLimit.UsageLimitService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.core.JacksonException;
 import com.jane.hskweb.npc.NpcDataProvider;
@@ -27,8 +30,37 @@ public class ChatService {
     private final SessionMemoryExtractor sessionMemoryExtractor;
     private final QuestDataProvider questDataProvider;
     private final QuestService questService;
+    private final UsageLimitService usageLimitService;
 
-    public NpcChatResponse chat(ChatMessageInfo chatMessageInfo) {
+    // 50글자 제한
+    private void validateMessage(String message) {
+
+        if (message == null || message.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "메시지를 입력해주세요."
+            );
+        }
+
+        if (message.codePointCount(0, message.length()) > 50) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "메시지는 최대 50자까지 입력할 수 있습니다."
+            );
+        }
+    }
+
+    public NpcChatResponse chat(
+            ChatMessageInfo chatMessageInfo,
+            String anonymousId,
+            String ip
+    ) {
+
+        // 제한
+        validateMessage(chatMessageInfo.getMessage());
+
+        // 사용량 제어
+        usageLimitService.reserveUsage(anonymousId, ip);
 
         QuestProgress questProgress = questService.prepareQuest(chatMessageInfo);
 

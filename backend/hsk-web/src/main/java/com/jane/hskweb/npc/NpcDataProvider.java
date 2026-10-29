@@ -1,11 +1,10 @@
 package com.jane.hskweb.npc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 
 @Component
@@ -13,7 +12,7 @@ import java.util.List;
 public class NpcDataProvider {
 
     private final JdbcTemplate jdbcTemplate;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public NpcData getNpc(String npcId) {
 
@@ -54,15 +53,9 @@ public class NpcDataProvider {
     }
 
     private List<String> parseJsonList(String json) {
-        try {
-            return objectMapper.readValue(
-                    json,
-                    new TypeReference<List<String>>() {}
-            );
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                    "NPC JSON 데이터 변환 실패", e
-            );
-        }
+        return jsonMapper.readValue(
+                json,
+                new TypeReference<List<String>>() {}
+        );
     }
 }
