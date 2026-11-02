@@ -19,7 +19,7 @@ export default function ChatMessageList({history, npc} : ChatMessageListProps) {
                         <div
                             className={`break-words px-4 py-3 rounded-2xl ${msg.role === "user"
                                 ? "bg-primary-light text-white rounded-br-sm"
-                                : "bg-secondary rounded-tl-sm"
+                                : "bg-gray rounded-tl-sm"
                                 }`}
                         >
                             <p>{msg.text}</p>

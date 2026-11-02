@@ -1,209 +1,75 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import PlaceNpcSelector from "./components/PlaceNpcSelector";
-import type {
-  ChatHistory,
-  ChatMessageInfo,
-  NpcChatResponse,
-  PlayerMemory,
-  SessionMemory,
-  QuestDefinition,
-  QuestProgress,
-  NpcData
-} from "./types/chat";
 import LevelSelector from "./components/LevelSelector";
 import ChatMessageList from "./components/ChatMessageList";
 import { useChatSelection } from "./hooks/useChatSelection";
+import { useQuestProgress } from "./hooks/useQuestProgress";
+import ChatInput from "./components/ChatInput";
+import { useChatSession } from "./hooks/useChatSession";
+import ChatQuestStatus from "./components/ChatQuestStatus";
 
 
 export default function Chat() {
 
+  // 컴포넌트
   const { selection, setSelection } = useChatSelection();
-  const [quests, setQuests] = useState<QuestDefinition[]>([]);
-  const [questProgresses, setQuestProgresses] =
-    useState<Record<string, QuestProgress>>({});
+
+  const {
+    quests,
+    questProgresses,
+    updateQuestProgress,
+    isQuestCompleted
+  } = useQuestProgress();
+
 
   const { place, npc, chatMode, questId } = selection;
 
-  const isQuestCompleted =
-    chatMode === "QUEST" &&
-    questId !== null &&
-    questProgresses[questId]?.status === "COMPLETED";
+  const questCompleted =
+    chatMode === "QUEST" && isQuestCompleted(questId);
+
+  const {
+    chatHistory,
+    sessionMemory,
+    playerMemory,
+    isLoading,
+    sendMessage
+  } = useChatSession({
+    npc,
+    place,
+    chatMode,
+    questId,
+    questCompleted,
+    updateQuestProgress
+  });
 
   // 입력중 메세지
   const [message, setMessage] = useState("");
-  // 채팅 내역 배열
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
-  // 세션 채팅 메모리 (현재 대화 요약)
-  const [sessionMemory, setSessionMemory] = useState<SessionMemory>({
-    topic: null,
-    facts: {},
-    lastNpcQuestion: null,
-  });
-  // 장기기억 (공용)
-  const [playerMemory, setPlayerMemory] = useState<PlayerMemory>({
-    facts: {}
-  });
+
   const [level, setLevel] = useState(1);
-  // NPC 응답 대기 상태
-  const [isLoading, setIsLoading] = useState(false);
-  const isLoadingRef = useRef(false);
 
-  // npc, 장소 변경시 대화 취소
-  const abortControllerRef = useRef<AbortController | null>(null);
-  // 세션 메모리 리셋
-  const resetSessionMemory = () => {
-    setSessionMemory({
-      topic: null,
-      facts: {},
-      lastNpcQuestion: null,
+  const handleSubmit = () => {
+    if (!message.trim() || isLoading || questCompleted) return;
+
+    sendMessage({
+      message,
+      level,
+      npc,
+      chatMode,
+      questId,
+      sessionMemory,
+      playerMemory,
+      questProgress:
+        chatMode === "QUEST" && questId
+          ? questProgresses[questId] ?? null
+          : null
     });
-  };
-
-  // npc, 장소 변경시 대화 초기화
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-      isLoadingRef.current = false;
-    };
-  }, [npc, place, chatMode, questId]);
-  //npc 변경시 초기화
-  useEffect(() => {
-    setChatHistory([]);
-    resetSessionMemory();
-    setIsLoading(false);
-
-
-    const controller = new AbortController();
-
-    fetch(`/api/chat/${npc}`, {
-      signal: controller.signal
-    })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("NPC 인삿말 조회 실패");
-        }
-        return res.json();
-      })
-      .then((data: {
-        greeting: string;
-        greetingTranslation: string;
-      }) => {
-        if (controller.signal.aborted) return;
-
-        setChatHistory([{
-          role: "npc",
-          text: data.greeting,
-          translation: data.greetingTranslation
-        }]);
-
-        setSessionMemory({
-          topic: null,
-          facts: {},
-          lastNpcQuestion: data.greeting
-        });
-      })
-      .catch(error => {
-        if (error.name !== "AbortError") {
-          console.error(error);
-        }
-      });
-
-    return () => controller.abort();
-
-  }, [npc, place, chatMode, questId]);
-
-  useEffect(() => {
-    fetch("/api/quests")
-      .then(res => {
-        if (!res.ok) throw new Error("퀘스트 목록 조회 실패");
-        return res.json();
-      })
-      .then((data: QuestDefinition[]) => {
-        setQuests(data);
-      })
-      .catch(error => {
-        console.error("퀘스트 조회 오류:", error);
-      });
-  }, []);
-
-
-
-  // 유저 메세지 전송
-  const sendMessage = (body: ChatMessageInfo) => {
-    // 빈 메시지 또는 응답 대기 중이면 전송하지 않음
-    if (!body.message.trim() || isLoadingRef.current || isQuestCompleted) return;
-
-    isLoadingRef.current = true;
-    setIsLoading(true);
-
-    // 대화내역에 새 메세지 추가
-    setChatHistory(prev => [
-      ...prev,
-      { role: "user", text: body.message }
-    ]);
 
     setMessage("");
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    fetch(`/api/chat/user_talk`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    })
-      .then(res => {
-        if (!res.ok) {
-          if (res.status === 429) {
-            throw new Error(
-              "오늘의 AI 대화 횟수를 모두 사용했어요. 내일 다시 이용해 주세요."
-            );
-          }
-
-          throw new Error("채팅 요청 실패");
-        }
-        return res.json();
-      })
-      .then((data: NpcChatResponse) => {
-        if (controller.signal.aborted) return;
-
-        setChatHistory(prev => [
-          ...prev,
-          {
-            role: "npc",
-            text: data.reply,
-            translation: data.translation
-          }
-        ]);
-
-        setSessionMemory(data.sessionMemory);
-        setPlayerMemory(data.playerMemory);
-        if (data.questProgress) {
-          setQuestProgresses(prev => ({
-            ...prev,
-            [data.questProgress!.questId]: data.questProgress!
-          }));
-        }
-      })
-      .catch(error => {
-        if (error.name === "AbortError") return;
-
-        console.error("채팅 오류:", error);
-      })
-      .finally(() => {
-        // 현재 요청일 때만 로딩 상태 해제
-        if (abortControllerRef.current === controller) {
-          abortControllerRef.current = null;
-          isLoadingRef.current = false;
-          setIsLoading(false);
-        }
-      });
   };
 
+  useEffect(() => {
+    setMessage("");
+  }, [npc, place, chatMode, questId]);
 
   return (
     <div className="mx-auto flex h-full max-w-7xl gap-6 px-6">
@@ -227,74 +93,29 @@ export default function Chat() {
         {/* 채팅창 */}
         <div className="min-h-0 flex-1 bg-slate-50 rounded-2xl border border-slate-100 px-6 py-5 overflow-y-auto">
           <div className="flex flex-col  flex-1  gap-6">
+            {/* 퀘스트 진행상태 */}
+            <ChatQuestStatus
+              chatMode={chatMode}
+              questCompleted={questCompleted}
+              progress={questId ? questProgresses[questId] ?? null : null}
+            />
             {/* 채팅 내역 */}
             <ChatMessageList
               history={chatHistory}
               npc={npc}
             />
-            {isQuestCompleted && (
-              <div className="mx-auto w-full max-w-md rounded-xl border border-green-200 bg-green-50 p-5 text-center">
-                <div className="text-lg font-bold text-green-700">
-                  퀘스트 완료!
-                </div>
-
-                <p className="mt-2 text-sm text-gray-600">
-                  필요한 정보를 모두 수집했습니다.
-                </p>
-
-                <p className="mt-2 text-sm text-gray-500">
-                  다른 퀘스트를 선택하거나 자유 대화를 시작하세요.
-                </p>
-              </div>
-            )}
           </div>
         </div>
         <div className="h-24 bg-background">
-          INPUT
-
-          <form
-            className="border-lg flex shadow-lg"
-            onSubmit={(e) => {
-              e.preventDefault();
-
-              sendMessage({
-                message: message,
-                level: level,
-                npc: npc,
-                chatMode: chatMode,
-                questId: questId,
-                sessionMemory: sessionMemory,
-                playerMemory: playerMemory,
-                questProgress:
-                  chatMode === "QUEST" && questId
-                    ? questProgresses[questId] ?? null
-                    : null
-              });
-            }}
-          >
-            <input
-              className="flex-1 bg-white rounded-lg outline-none pl-3 py-3 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder={
-                isQuestCompleted
-                  ? "완료된 퀘스트입니다"
-                  : "대화를 입력해주세요"
-              }
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isLoading || isQuestCompleted}
-            />
-
-            <button
-              type="submit"
-              disabled={isLoading || isQuestCompleted || !message.trim()}
-              className="bg-primary-light text-white rounded-r w-20 hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isQuestCompleted ? "완료" : isLoading ? "대기 중" : "입력"}
-            </button>
-          </form>
+          <ChatInput
+            message={message}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            questCompleted={questCompleted}
+          />
         </div>
       </div>
     </div>
   )
-
 }
