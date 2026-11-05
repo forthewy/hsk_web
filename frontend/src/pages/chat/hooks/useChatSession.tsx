@@ -169,6 +169,14 @@ export function useChatSession({
             .catch(error => {
                 if (error.name === "AbortError") return;
                 console.error("채팅 오류:", error);
+
+                setChatHistory(prev => [
+                    ...prev,
+                    {
+                        role: "system",
+                        text: error.message
+                    }
+                ]);
             })
             .finally(() => {
                 if (abortControllerRef.current === controller) {

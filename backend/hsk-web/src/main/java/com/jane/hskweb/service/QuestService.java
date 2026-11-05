@@ -120,4 +120,6 @@ public class QuestService {
             progress.setStatus(QuestStatus.COMPLETED);
         }
     }
+
+
 }

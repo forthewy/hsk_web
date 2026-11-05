@@ -15,13 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UsageLimitService {
 
-//    private static final int USER_LIMIT = 20;
-//    private static final int IP_LIMIT = 40;
-//    private static final int GLOBAL_LIMIT = 200;
-
-    private static final int USER_LIMIT = 3;
-    private static final int IP_LIMIT = 5;
-    private static final int GLOBAL_LIMIT = 10;
+//   private static final int USER_LIMIT = 3;
+    private static final int IP_LIMIT = 7;
+    private static final int GLOBAL_LIMIT = 30;
 
     private final DailyUsageRepository repository;
 
@@ -34,8 +30,8 @@ public class UsageLimitService {
 
         List<UsageTarget> targets = List.of(
                 new UsageTarget("GLOBAL", "ALL", GLOBAL_LIMIT, 2),
-                new UsageTarget("IP", ip, IP_LIMIT, 1),
-                new UsageTarget("USER", anonymousId, USER_LIMIT, 1)
+                new UsageTarget("IP", ip, IP_LIMIT, 1)
+               // new UsageTarget("USER", anonymousId, USER_LIMIT, 1)
         );
 
         // 행이 없으면 먼저 생성
@@ -90,4 +86,26 @@ public class UsageLimitService {
             int limit,
             int amount
     ) {}
+
+
+
+    @Transactional(readOnly = true)
+    public UsageStatusResponse getUsageStatus(String ip) {
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Asia/Seoul")
+        );
+
+        int usedCount = repository
+                .findByUsageDateAndUsageTypeAndIdentifier(
+                        today, "IP", ip
+                )
+                .map(DailyUsage::getRequestCount)
+                .orElse(0);
+
+        return new UsageStatusResponse(
+                usedCount,
+                IP_LIMIT
+        );
+    }
+
 }

@@ -44,4 +44,6 @@ public class ChatController {
     public NpcData getNpc(@PathVariable String npcId) {
         return npcDataProvider.getNpc(npcId);
     }
+
+
 }

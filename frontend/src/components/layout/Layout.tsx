@@ -1,4 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
+import Header from "./Header";
+import Footer from "./Footer";
 
 export default function Layout() {
   const location = useLocation();
@@ -6,19 +8,16 @@ export default function Layout() {
 
   return (
     <div className="h-screen flex flex-col">
-      <header className="h-16 bg-primary-light py-4">
-        <h1>HSK AI Chat</h1>
-      </header>
+      <Header />
 
-      <main className="flex-1 min-h-0 w-full overflow-hidden">
+      <main
+        className={
+          "flex-1 min-h-0 w-full overflow-hidden bg-background"
+        }
+      >
         <Outlet />
       </main>
-
-      {!isChatPage && (
-        <footer className="h-20 shrink-0 bg-gray">
-          FOOTER
-        </footer>
-      )}
+      {!isChatPage && <Footer />}
     </div>
   );
 }

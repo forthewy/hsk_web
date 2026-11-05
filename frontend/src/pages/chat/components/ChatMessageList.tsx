@@ -5,8 +5,8 @@ type ChatMessageListProps = {
     npc: string;
 }
 
-export default function ChatMessageList({history, npc} : ChatMessageListProps) {
-    
+export default function ChatMessageList({ history, npc }: ChatMessageListProps) {
+
     return (
         <div>
             {history.map((msg, index) => (
@@ -15,26 +15,34 @@ export default function ChatMessageList({history, npc} : ChatMessageListProps) {
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
                         }`}
                 >
-                    <div className="flex flex-col gap-1 max-w-xl">
-                        <div
-                            className={`break-words px-4 py-3 rounded-2xl ${msg.role === "user"
-                                ? "bg-primary-light text-white rounded-br-sm"
-                                : "bg-gray rounded-tl-sm"
-                                }`}
-                        >
-                            <p>{msg.text}</p>
-
-                            {msg.translation && (
-                                <p className="mt-2 text-sm opacity-70">
-                                    {msg.translation}
-                                </p>
-                            )}
+                    {msg.role === "system" ? (
+                        <div className="w-full max-w-xl py-2 text-center">
+                            <p className="text-sm text-red-500">
+                                {msg.text}
+                            </p>
                         </div>
+                    ) : (
+                        <div className="flex flex-col gap-1 max-w-xl">
+                            <div
+                                className={`break-words px-4 py-3 rounded-2xl ${msg.role === "user"
+                                        ? "bg-primary-light text-white rounded-br-sm"
+                                        : "bg-gray rounded-tl-sm"
+                                    }`}
+                            >
+                                <p>{msg.text}</p>
 
-                        <span className="text-xs text-gray-500">
-                            {msg.role === "user" ? "나" : npc}
-                        </span>
-                    </div>
+                                {msg.translation && (
+                                    <p className="mt-2 text-sm opacity-70">
+                                        {msg.translation}
+                                    </p>
+                                )}
+                            </div>
+
+                            <span className="text-xs text-gray-500">
+                                {msg.role === "user" ? "나" : npc}
+                            </span>
+                        </div>
+                    )}
                 </div>
             ))}
         </div>

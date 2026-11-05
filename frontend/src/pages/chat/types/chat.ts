@@ -72,7 +72,7 @@ export type NpcChatResponse = {
 };
 // 대화 내역 객체 (화면용)
 export type ChatHistory = {
-  role: "user" | "npc";
+  role: "user" | "npc" | "system";
   text: string;
   translation?: string;
 };
