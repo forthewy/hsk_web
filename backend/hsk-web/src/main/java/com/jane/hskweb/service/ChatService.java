@@ -52,15 +52,14 @@ public class ChatService {
 
     public NpcChatResponse chat(
             ChatMessageInfo chatMessageInfo,
-            String anonymousId,
-            String ip
+            String anonymousId
     ) {
 
         // 제한
         validateMessage(chatMessageInfo.getMessage());
 
         // 사용량 제어
-        usageLimitService.reserveUsage(anonymousId, ip);
+        usageLimitService.reserveUsage(anonymousId);
 
         QuestProgress questProgress = questService.prepareQuest(chatMessageInfo);
 
@@ -107,7 +106,7 @@ public class ChatService {
             }
         }
 
-        System.out.println("추출된 기억: " + updatedMemory.getFacts());
+        log.debug("추출된 facts: {}", updatedMemory.getFacts());
 
         // NPC 정보 조회
         NpcData npc = npcDataProvider.getNpc(
@@ -128,13 +127,22 @@ public class ChatService {
 
         try {
 
-            String cleanedResponse = response
-                    .replace("```json", "")
-                    .replace("```", "")
-                    .trim();
+            String cleanedResponse = response.trim();
+
+
+            int start = cleanedResponse.indexOf('{');
+            int end = cleanedResponse.lastIndexOf('}');
+
+            if (start == -1 || end <= start) {
+                throw new IllegalStateException("Gemini 응답에 JSON 객체가 없습니다.");
+            }
+
+            cleanedResponse = cleanedResponse.substring(start, end + 1);
 
             NpcChatResponse result =
                     objectMapper.readValue(cleanedResponse, NpcChatResponse.class);
+
+            validateNpcResponse(result);
 
             updateLastNpcQuestion(updatedMemory, result.getReply());
 
@@ -142,7 +150,7 @@ public class ChatService {
             result.setPlayerMemory(playerMemory);
             result.setQuestProgress(questProgress);
 
-            System.out.println("PlayerMemory: " + playerMemory.getFacts());
+            log.debug("PlayerMemory: {}", playerMemory.getFacts());
 
             return result;
 
@@ -179,6 +187,27 @@ public class ChatService {
                 questProgress,
                 nextRequiredFact
         );
+    }
+
+    private void validateNpcResponse(NpcChatResponse response) {
+
+        String reply = response.getReply();
+        String translation = response.getTranslation();
+
+        if (reply == null || translation == null) {
+            throw new IllegalStateException("NPC 응답 필드 누락");
+        }
+
+        if (reply.codePointCount(0, reply.length()) > 100
+                || translation.codePointCount(0, translation.length()) > 150) {
+
+            log.warn("NPC 응답 길이 초과 - 중국어: {}자, 한국어: {}자",
+                    reply.codePointCount(0, reply.length()),
+                    translation.codePointCount(0, translation.length()));
+
+            response.setReply("我们一次练习一点吧！你想先学什么？");
+            response.setTranslation("조금씩 연습해 봐요! 무엇부터 배우고 싶나요?");
+        }
     }
 }
 

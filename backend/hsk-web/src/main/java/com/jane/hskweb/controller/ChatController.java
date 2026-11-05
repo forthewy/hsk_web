@@ -30,12 +30,10 @@ public class ChatController {
         String anonymousId =
                 anonymousUserService.getOrCreateId(request, response);
 
-        String ip = request.getRemoteAddr();
 
         return chatService.chat(
                 chatMessageInfo,
-                anonymousId,
-                ip
+                anonymousId
         );
     }
 

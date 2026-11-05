@@ -7,6 +7,7 @@ import { useQuestProgress } from "./hooks/useQuestProgress";
 import ChatInput from "./components/ChatInput";
 import { useChatSession } from "./hooks/useChatSession";
 import ChatQuestStatus from "./components/ChatQuestStatus";
+import QuestList from "./components/QuestList";
 
 
 export default function Chat() {
@@ -79,6 +80,10 @@ export default function Chat() {
         </h2>
         {/* npc, 장소, 퀘스트 선택 */}
         <PlaceNpcSelector
+          selection={selection}
+          onSelect={setSelection}
+        />
+        <QuestList
           selection={selection}
           onSelect={setSelection}
           quests={quests}

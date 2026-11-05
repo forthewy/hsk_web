@@ -10,6 +10,7 @@ export default function ChatQuestStatus({
     questCompleted,
     progress
 }: ChatQuestStatusProps) {
+  
     if (chatMode !== "QUEST") {
         return null;
     }
