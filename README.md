@@ -28,10 +28,18 @@ React와 Spring Boot를 기반으로 구현했으며, AI 응답 생성뿐 아니
 ### 2. 퀘스트 기반 회화 진행
 
 사용자가 NPC와 대화하면서 특정 정보를 수집하는 방식으로 퀘스트를 수행합니다.
-퀘스트는 requiredFact (필요 정보) 를 가지고 있고, 맥락을 이탈하는 것을 방지하기 위해 다음으로 수집할 정보를 ai 에게 제안.
+퀘스트는 requiredFact (필요 정보) 를 가지고 있습니다
+
+1. 퀘스트 id 로 해당 퀘스트에 필요한 정보 확인
+2. 해당 정보에 해당 하는 내용이 사용자의 말에 있는 지 확인 (ai 추출)
+3. 모든 정보를 수집했다면 -> COMPLETE
+4. 아니라면 수집하지 못한 정보를 ai 에게 수집하라고 전달
 
 
-```추출 대상 키: [drink, temperature, paymentMethod]
+```
+아래 내용은 로그 기록입니다
+
+추출 대상 키: [drink, temperature, paymentMethod]
 추출된 facts: {temperature=뜨거운 아이스, paymentMethod=카드, drink=아메리카노}
 퀘스트 ID: coffee_order
 퀘스트 상태: COMPLETED
@@ -134,7 +142,6 @@ D  --> F
 | useChatSession | 대화 내역 및 메모리 관리 |
 | useQuestProgress | 퀘스트 진행 상태 관리 |
 
-## 주요 기술적 고민 및 개선
 
 ## 향후 개선 사항
 
