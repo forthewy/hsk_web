@@ -83,23 +83,8 @@ IP 주소로 사용자를 구분할 경우 동일 네트워크의 여러 사용�
 ### 구현 구조
 
 ## 1. 기억 추출 및 저장
-```mermaid
-flowchart LR
-    subgraph Frontend["Frontend - React"]
-        direction LR
-        A["메시지 입력"]
-    end
+<img width="792" height="187" alt="image" src="https://github.com/user-attachments/assets/f262e140-2532-427a-b2cb-ec3a0e8a38c1" />
 
-    subgraph Backend["Backend - Spring Boot"]
-        direction LR
-        D["Gemini 기억 추출"]
-        E["기존 기억과<br/>새 기억 병합"]
-
-         D --> E
-    end
-
-    A -->|"ChatMessageInfo 전달"| D
-```
 
 **ChatMessageInfo 는 메세지, npc, 단기/장기 기억을 담고 전달된다**
 
