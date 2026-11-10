@@ -2,7 +2,9 @@ package com.jane.hskweb.usageLimit;
 
 import com.jane.hskweb.entity.DailyUsage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,6 +13,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UsageLimitService {
@@ -106,4 +109,16 @@ public class UsageLimitService {
         );
     }
 
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
+    @Transactional
+    public void deleteOldUsage() {
+
+        LocalDate cutoff = LocalDate.now(
+                ZoneId.of("Asia/Seoul")
+        ).minusDays(30);
+
+        long deletedCount = repository.deleteByUsageDateBefore(cutoff);
+
+        log.info("오래된 사용량 기록 삭제: {}건", deletedCount);
+    }
 }

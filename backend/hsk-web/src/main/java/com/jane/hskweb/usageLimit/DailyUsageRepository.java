@@ -49,4 +49,6 @@ public interface DailyUsageRepository
             @Param("type") String type,
             @Param("identifier") String identifier
     );
+
+    long deleteByUsageDateBefore(LocalDate date);
 }
